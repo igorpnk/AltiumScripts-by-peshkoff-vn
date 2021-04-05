@@ -1,0 +1,472 @@
+procedure DetectViolations;
+var
+    BoardIterator : IPCB_SpatialIterator;
+    Iterator      : IPCB_BoardIterator;
+    Rule          : IPCB_Rule;
+    Violation     : IPCB_Violation;
+    Rectangle     : TCoordRect;
+    MaxWidth      : Integer;
+
+begin
+    // now we have info about selected primitives. We need to cycle through it because
+
+    //Determinate MaxWidth
+    Iterator        := PCBBoard.BoardIterator_Create;
+    Iterator.AddFilter_ObjectSet(MkSet(eRuleObject));
+    Iterator.AddFilter_LayerSet(AllLayers);
+    Iterator.AddFilter_Method(eProcessAll);
+
+    MaxWidth := 0;
+
+    Rule := Iterator.FirstPCBObject;
+
+    While (Rule <> Nil) Do
+    Begin
+        if (Rule.RuleKind = eRule_Clearance) and Rule.Enabled then
+           if MaxWidth < Rule.Gap then
+              MaxWidth := Rule.Gap;
+
+        Rule := Iterator.NextPCBObject;
+    End;  //While (Rule <> Nil)
+    //End of Determinate MaxWidth
+
+       Rectangle := Prim1.BoundingRectangle;
+       BoardIterator := PCBBoard.SpatialIterator_Create;
+       BoardIterator.AddFilter_IPCB_LayerSet(Prim1.Layer);
+       BoardIterator.AddFilter_ObjectSet(AllObjects);
+       BoardIterator.AddFilter_Area(Rectangle.Left - MaxWidth,
+                                    Rectangle.Bottom - MaxWidth,
+                                    Rectangle.Right + MaxWidth,
+                                    Rectangle.Top + MaxWidth);
+
+       Prim2 := BoardIterator.FirstPCBObject;
+
+       while Prim2 <> Nil do
+       begin
+          Rule := PCBBoard.FindDominantRuleForObjectPair(Prim1, Prim2, eRule_Clearance);
+
+          if Rule <> nil then
+          begin
+             PCBBoard.AddPCBObject(Rule.ActualCheck(Prim1, Prim2));
+             Prim2.GraphicallyInvalidate;
+          end;
+
+          Prim2 := BoardIterator.NextPCBObject;
+       end;
+
+    PCBBoard.SpatialIterator_Destroy(BoardIterator);
+    PCBBoard.BoardIterator_Destroy(Iterator);
+
+end;
+
+procedure DeSelectAll;
+begin
+    ResetParameters;
+    AddStringParameter('Scope','All');
+    RunProcess('PCB:DeSelect');
+end;
+
+procedure buff_detect;
+begin
+
+ShowMessage(Clipboard.Formats(0));
+
+  {if Clipboard.HasFormat(CF_TEXT) then
+    ShowMessage('буфер содержит текст');
+  if Clipboard.HasFormat(CF_BITMAP) then
+    ShowMessage('буфер содержит изображение');
+  if Clipboard.HasFormat(CF_METAFILEPICT) then
+    ShowMessage('буфер содержит векторное изображение');
+  if Clipboard.HasFormat(CF_PICTURE) then
+    ShowMessage('буфер содержит обьект типа TPicture');
+  if Clipboard.HasFormat(CF_COMPONENT) then
+    ShowMessage('буфер содержит компонент'); }
+end;
+
+
+Procedure MyCut;
+var
+    i : Integer;
+begin
+     PCBBoard := PCBServer.GetCurrentPCBBoard;
+     If PCBBoard = Nil Then Exit;
+
+     if PCBBoard.SelectecObjectCount = 0 then exit;
+
+
+     //SelectecPrims - StringList с выделенными объекстами
+    SelectedPrims := TStringList.Create;
+    for i := 0 to PCBBoard.SelectecObjectCount - 1 do
+    begin
+       if ((PCBBoard.SelectecObject[i].ObjectId <> eTrackObject) and
+           (PCBBoard.SelectecObject[i].ObjectId <> eArcObject)) then
+       begin
+          ShowInfo('Please select only primitive');
+          exit;
+       end;
+       SelectedPrims.AddObject(IntToStr(i), PCBBoard.SelectecObject[i]);
+    end;
+    //Закончили формирование SlectecPrims
+
+    for i := 0 to SelectedPrims.Count - 1 do
+    begin
+       Prim1 := SelectedPrims.GetObject(i);
+       //PCBServer.PreProcess;
+
+
+     {  if (Prim1.ObjectID <> ePadObject) and (Prim1.ObjectID <> eViaObject) then
+       begin
+            PCBServer.SendMessageToRobots(
+                    Track_01.I_ObjectAddress,
+                    c_Broadcast,
+                    PCBM_BeginModify ,
+                    c_NoEventData);
+
+            PCBBoard.AddPCBObject(Track_01);
+
+            ///Clipboard.;
+            PCBServer.SendMessageToRobots(
+                    Track_01.I_ObjectAddress,
+                    c_Broadcast,
+                    PCBM_EndModify ,
+                    c_NoEventData);    }
+
+
+            // We will remove all violations that are connected to the Prim1, using a simple trick :-)
+            //PCBBoard.RemovePCBObject(Prim1);
+            //PCBBoard.AddPCBObject(Prim1);
+           // CLPBRD.
+           // Prim1.Selected := True;
+
+           // DetectViolations;
+      end;
+
+
+     // Now we need to get the signal layers and populate comboBox
+     //TheLayerStack := PCBBoard.LayerStack;
+     //If TheLayerStack = Nil Then Exit;
+
+     // Now we need to get the signal layers and populate comboBox
+     //TheLayerStack := PCBBoard.LayerStack;
+     //If TheLayerStack = Nil Then Exit;
+
+   // ResetParameters;
+    //AddStringParameter('ProjectName','D:\Work\Altium Designer\Scripts\EditPCBObject v1.0\EditPCBObject.PrjScr');
+    //AddStringParameter('ProcName','EditPCBObject.pas>trytoread');
+    //AddStringParameter('Action', 'RubberStamp');
+    //RunProcess('PCB:Paste');
+
+
+end;
+
+Procedure MyCopy;
+begin
+
+    ResetParameters;
+    //AddStringParameter('ProjectName','D:\Work\Altium Designer\Scripts\EditPCBObject v1.0\EditPCBObject.PrjScr');
+    //AddStringParameter('ProcName','EditPCBObject.pas>trytoread');
+    //AddStringParameter('Action', 'RubberStamp');
+    RunProcess('PCB:Copy');
+
+
+end;
+
+
+Procedure MyPaste;
+begin
+
+    ResetParameters;
+    //AddStringParameter('ProjectName','D:\Work\Altium Designer\Scripts\EditPCBObject v1.0\EditPCBObject.PrjScr');
+    //AddStringParameter('ProcName','EditPCBObject.pas>trytoread');
+    //AddStringParameter('Action', 'RubberStamp');
+    RunProcess('PCB:Paste');
+
+
+end;
+
+Procedure PlacePrimitive01;
+Var
+    TheLayerStack   : IPCB_LayerStack;
+    LayerObjCur     : IPCB_LayerObject;
+    NetName1        : String;
+    NetName2        : String;
+    i, j            : Integer;
+    SelectedPrims   : TStringList;
+    CLPBRD          : TClipBoard;
+    Track_01        : IPCB_Track;
+    x0, y0          : TCoord;
+
+    TrackX          : TStringList; //Набор координат
+    TrackY          : TStringList;
+    aX1             : array[1..8] of real;
+    aX2             : array[1..8] of real;
+    aY1             : array[1..8] of real;
+    aY2             : array[1..8] of real;
+
+begin
+     PCBBoard := PCBServer.GetCurrentPCBBoard;
+     If PCBBoard = Nil Then Exit;
+
+     // Now we need to get the signal layers and populate comboBox
+     TheLayerStack := PCBBoard.LayerStack;
+     If TheLayerStack = Nil Then Exit;
+
+     LayerObjCur := PCBBoard.CurrentLayer;
+
+    aX1[1] := 0;
+    aX1[2] := 0;
+    aX1[3] := 0.099;
+    aX1[4] := 0.263;
+    aX1[5] := 0.39;
+
+    aX1[6] := 0;
+    aX1[7] := 0.102;
+    aX1[8] := 0.61;
+
+    aY1[1] := 0;
+    aY1[2] := 0.428;
+    aY1[3] := 0.527;
+    aY1[4] := 0.527;
+    aY1[5] := -0.15;
+
+    aY1[6] := 1;
+    aY1[7] := 1;
+    aY1[8] := -0.15;
+
+    aX2[1] := 0;
+    aX2[2] := 0.099;
+    aX2[3] := 0.263;
+    aX2[4] := 0.39;
+    aX2[5] := 0.39;
+
+    aX2[6] := 0.102;
+    aX2[7] := 0.61;
+    aX2[8] := 0.61;
+
+    aY2[1] := 0.428;
+    aY2[2] := 0.527;
+    aY2[3] := 0.527;
+    aY2[4] := 0.4;
+    aY2[5] := 0.4;
+
+    aY2[6] := 1;
+    aY2[7] := 0.492;
+    aY2[8] := 0.492;
+
+
+    PCBBoard.ChooseLocation(x0, y0, 'choose loc');
+
+    PCBServer.PreProcess;
+    for i := 1 to 8 do
+    begin
+        Track_01 := PCBServer.PCBObjectFactory(eTrackObject, eNoDimension, eCreate_Default);
+        Track_01.X1 := x0 + MMsToCoord(aX1[i]);
+        Track_01.Y1 := y0 + MMsToCoord(aY1[i]);
+        Track_01.X2 := x0 + MMsToCoord(aX2[i]);
+        Track_01.Y2 := y0 + MMsToCoord(aY2[i]);
+        Track_01.Layer := LayerObjCur;
+        Track_01.Width := MMsToCoord(0.08);
+
+        PCBServer.SendMessageToRobots(
+                Track_01.I_ObjectAddress,
+                c_Broadcast,
+                PCBM_BeginModify ,
+                c_NoEventData);
+
+        PCBBoard.AddPCBObject(Track_01);
+        Track_01.Selected := true;
+
+        PCBServer.SendMessageToRobots(
+                Track_01.I_ObjectAddress,
+                c_Broadcast,
+                PCBM_EndModify ,
+                c_NoEventData);
+
+        Track_01.GraphicallyInvalidate;
+
+
+    end; //for i := 1 to 8
+
+    PCBServer.PostProcess;
+   // RegistryRead;
+   // if cbClearSelectMoveToLayer.Checked then DeSelectAll;
+
+   //PCBBoard.
+
+    ResetParameters;
+    AddStringParameter('Action','RubberStamp');
+   // AddIntegerParameter('Type','First');
+    RunProcess('PCB:Paste');
+    ResetParameters;
+    RunProcess('PCB:Clear');
+    PCBBoard.ViewManager_FullUpdate;
+    close;
+end;
+
+
+procedure TfrmPP.Button1Click(Sender: TObject);
+var
+    i       : integer;
+    xmin, xmax  : integer;
+    ymin, ymax  : integer;
+
+    x_img,
+    y_img       : integer;
+
+    rct1, rct2  : TRect;
+    factor      : double;
+begin
+
+    //**** Проба slSet11
+    img11.Canvas.Pen.Color:=clRed;
+    //меняем толщину линии
+    img11.Canvas.Pen.Width:=2;
+    //чертим линию от точки x=10, y=10 до точки x=110, y=20
+    for i := 0 to slSet11.Count - 1 do
+    begin
+        img11.Canvas.MoveTo(StrToFloat(slSet11[i]),     StrToFloat(slSet11[i + 1]));
+        img11.Canvas.LineTo(StrToFloat(slSet11[i + 2]), StrToFloat(slSet11[i + 3]));
+        i := i + 3;
+    end;
+
+    //****** Проба slSet12
+    //Вычисляем "габариты" хранящихся линий
+
+    xmin    := StrToInt(slSet12[1]); //x1
+    xmax    := StrToInt(slSet12[2]); //y1
+    ymin    := StrToInt(slSet12[1]); //x1
+    ymax    := StrToInt(slSet12[2]); //y1
+
+    for i:= 1 to slSet12.Count - 1 do //повторим с X1Y1, упростим цикл
+    begin
+        // Обрабатываем только позиции 1, 6, 11 и т.д.
+        // Только позиции с X1, остальные - мимо
+        if ((i - 1) mod 5) <> 0 then Continue;
+
+        if StrToInt(slSet12[i]) < xmin then xmin := StrToInt(slSet12[i]); //X1
+        if StrToInt(slSet12[i]) > xmax then xmax := StrToInt(slSet12[i]); //X1
+
+        if StrToInt(slSet12[i + 1]) < ymin then ymin := StrToInt(slSet12[i + 1]); //Y1
+        if StrToInt(slSet12[i + 1]) > ymax then ymax := StrToInt(slSet12[i + 1]); //Y1
+
+        if StrToInt(slSet12[i + 2]) < xmin then xmin := StrToInt(slSet12[i + 2]); //X2
+        if StrToInt(slSet12[i + 2]) > xmax then xmax := StrToInt(slSet12[i + 2]); //X2
+
+        if StrToInt(slSet12[i + 3]) < ymin then ymin := StrToInt(slSet12[i + 3]); //Y2
+        if StrToInt(slSet12[i + 3]) > ymax then ymax := StrToInt(slSet12[i + 3]); //Y2
+
+
+    end;
+
+    //считаем соотношение, где больше разброс, тот и коэффициент
+    //img 64 x 64, область для рисования 48 x 48
+    if ((xmax - xmin) / 48) > ((ymax - ymin) / 48) then
+        factor := 48 / (xmax - xmin)
+        else
+        factor := 48 / (ymax - ymin);
+
+    //showmessage(factor);  //9432.4
+
+    img12.Canvas.Pen.Color := clBlue;
+    //меняем толщину линии
+    img12.Canvas.Pen.Width := 3;
+    //чертим линию от точки x=10, y=10 до точки x=110, y=20
+
+
+    for i:= 1 to slSet12.Count - 1 do //повторим с X1Y1, упростим цикл
+    begin
+        // Обрабатываем только позиции 1, 6, 11 и т.д.
+        // Только позиции с X1, остальные - мимо
+        if ((i - 1) mod 5) <> 0 then Continue;
+
+        // к каждой координате +8 отступ
+        x_img := round(8 +  factor * (slSet12[i] - xmin)     + (48 - factor * (xmax - xmin)) / 2);
+        y_img := round(56 - factor * (slSet12[i + 1] - ymin) - (48 - factor * (ymax - ymin)) / 2);
+        img12.Canvas.MoveTo(x_img, y_img);
+
+        x_img := round(8 +  factor * (slSet12[i + 2] - xmin) + (48 - factor * (xmax - xmin)) / 2);
+        y_img := round(56 - factor * (slSet12[i + 3] - ymin) - (48 - factor * (ymax - ymin)) / 2);
+        img12.Canvas.LineTo(x_img, y_img);
+
+    end;
+
+    //**********************************************************************************
+    //****** Проба slSet13
+    //Вычисляем "габариты" хранящихся линий
+
+    xmin    := StrToInt(slSet13[1]); //x1
+    xmax    := StrToInt(slSet13[2]); //y1
+    ymin    := StrToInt(slSet13[1]); //x1
+    ymax    := StrToInt(slSet13[2]); //y1
+
+    for i:= 1 to slSet13.Count - 1 do //повторим с X1Y1, упростим цикл
+    begin
+        // Обрабатываем только позиции 1, 6, 11 и т.д.
+        // Только позиции с X1, остальные - мимо
+        if ((i - 1) mod 5) <> 0 then Continue;
+
+        if StrToInt(slSet13[i]) < xmin then xmin := StrToInt(slSet13[i]); //X1
+        if StrToInt(slSet13[i]) > xmax then xmax := StrToInt(slSet13[i]); //X1
+
+        if StrToInt(slSet13[i + 1]) < ymin then ymin := StrToInt(slSet13[i + 1]); //Y1
+        if StrToInt(slSet13[i + 1]) > ymax then ymax := StrToInt(slSet13[i + 1]); //Y1
+
+        if StrToInt(slSet13[i + 2]) < xmin then xmin := StrToInt(slSet13[i + 2]); //X2
+        if StrToInt(slSet13[i + 2]) > xmax then xmax := StrToInt(slSet13[i + 2]); //X2
+
+        if StrToInt(slSet13[i + 3]) < ymin then ymin := StrToInt(slSet13[i + 3]); //Y2
+        if StrToInt(slSet13[i + 3]) > ymax then ymax := StrToInt(slSet13[i + 3]); //Y2
+
+
+    end;
+
+
+    //showmessage(inttostr(xmin) + ', ' + inttostr(xmax) + ', ' + inttostr(ymin) + ', ' + inttostr(ymax));  //120078, -226377
+
+    //считаем соотношение, где больше разброс, тот и коэффициент
+    //img 64 x 64, область для рисования 48 x 48
+    if ((xmax - xmin) / 48) > ((ymax - ymin) / 48) then
+        factor := 48 / (xmax - xmin)
+        else
+        factor := 48 / (ymax - ymin);
+
+    //showmessage(factor);  //9432.4
+
+    img13.Canvas.Pen.Color := clNavy;
+    //меняем толщину линии
+    img13.Canvas.Pen.Width := 3;
+    //чертим линию от точки x=10, y=10 до точки x=110, y=20
+
+
+    for i:= 1 to slSet13.Count - 1 do //повторим с X1Y1, упростим цикл
+    begin
+        // Обрабатываем только позиции 1, 6, 11 и т.д.
+        // Только позиции с X1, остальные - мимо
+        if ((i - 1) mod 5) <> 0 then Continue;
+
+        // к каждой координате +8 отступ
+        x_img := round(8 +  factor * (slSet13[i] - xmin)     + (48 - factor * (xmax - xmin)) / 2);
+        y_img := round(56 - factor * (slSet13[i + 1] - ymin) - (48 - factor * (ymax - ymin)) / 2);
+        img13.Canvas.MoveTo(x_img, y_img);
+
+        x_img := round(8 +  factor * (slSet13[i + 2] - xmin) + (48 - factor * (xmax - xmin)) / 2);
+        y_img := round(56 - factor * (slSet13[i + 3] - ymin) - (48 - factor * (ymax - ymin)) / 2);
+        img13.Canvas.LineTo(x_img, y_img);
+
+    end;
+
+    // отрисовываем X0Y0
+    img13.Canvas.Pen.Color := clRed;
+    img13.Canvas.Pen.Width := 1;
+    x_img := round(8 +  factor * (0 - xmin)     + (48 - factor * (xmax - xmin)) / 2);
+    y_img := round(56 - factor * (0 - ymin) - (48 - factor * (ymax - ymin)) / 2);
+    img13.Canvas.MoveTo(x_img - 7, y_img);
+    img13.Canvas.LineTo(x_img + 7, y_img);
+    img13.Canvas.MoveTo(x_img, y_img - 7);
+    img13.Canvas.LineTo(x_img, y_img + 7);
+
+
+    //**********************************************************************************
+    //****** Конец slSet13
+
+end;

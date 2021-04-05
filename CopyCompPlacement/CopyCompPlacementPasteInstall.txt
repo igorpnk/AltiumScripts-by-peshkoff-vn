@@ -1,0 +1,23 @@
+Caption: 	Copy Positions
+Description: 	Copy components and designators positions to clipboard
+Process:	ScriptingSystem:RunScript
+Parameters:	ProjectName=[Your path]\CopyCompPlacement\CopyCompPlacement.PrjScr|ProcName=CopyCompPlacement.pas>CopyCompPos
+Bitmap File:	[Your path]\CopyCompPlacement\CopyCompPlacementCopy.bmp
+
+Caption: 	Paste Components and Designators Positions
+Description: 	Paste components and designators positions
+Process:	ScriptingSystem:RunScript
+Parameters:	ProjectName=[Your path]\CopyCompPlacement\CopyCompPlacement.PrjScr|ProcName=CopyCompPlacement.pas>PasteCompPosAndDes
+Bitmap File:	[Your path]\CopyCompPlacement\CopyCompPlacementPastePosAndDes.bmp
+
+Caption: 	Paste Components Positions
+Description: 	Paste only components positions, designators stay on old position in relation to own components
+Process:	ScriptingSystem:RunScript
+Parameters:	ProjectName=[Your path]\CopyCompPlacement\CopyCompPlacement.PrjScr|ProcName=CopyCompPlacement.pas>PasteCompPos
+Bitmap File:	[Your path]\CopyCompPlacement\CopyCompPlacementPaste.bmp
+
+Caption: 	Paste Des Positions
+Description: 	Paste only Designators positions
+Process:	ScriptingSystem:RunScript
+Parameters:	ProjectName=[Your path]\CopyCompPlacement\CopyCompPlacement.PrjScr|ProcName=CopyCompPlacement.pas>PasteCompDes
+Bitmap File:	[Your path]\CopyCompPlacement\CopyCompPlacementPasteDes.bmp
